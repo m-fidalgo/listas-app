@@ -1,25 +1,14 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, ScrollView, RefreshControl } from "react-native";
+import { View, Modal, Button, StyleSheet } from "react-native";
 import { ListsService } from "./app/services/ListsService";
 import ListsView from "./app/views/ListsView";
+import List from "./app/components/List";
 
 export default function App() {
   const [lists, setLists] = useState([]);
+  const [selectedList, setSelectedList] = useState({});
   const [isLoading, setIsLoading] = useState(false);
-
-  // [
-  //   {
-  //     title: "Mercado",
-  //     description: "Comprar",
-  //     picture:
-  //       "http://jornalsomos.com.br/img/noticias/carrinho-mercado-inova-social.jpg",
-  //     items: [
-  //       { id: "0", description: "Farinha", done: false },
-  //       { id: "1", description: "Leite", done: false },
-  //     ],
-  //     id: "8lAJLfVzk7UkFzyI",
-  //   },
-  // ]
+  const [isModalVisible, setIsModalVisible] = useState(false);
 
   async function getLists() {
     setIsLoading(true);
@@ -32,9 +21,62 @@ export default function App() {
     getLists();
   }, []);
 
+  async function createList() {
+    const newList = await ListsService.create({
+      title: "Nova Lista",
+      description: "",
+      picture: "",
+      items: [],
+    });
+    setLists([...lists, newList]);
+    selectList(newList);
+  }
+
+  function removeList(listToRemove) {
+    setLists(lists.filter((list) => list.id != listToRemove.id));
+
+    ListsService.remove(listToRemove.id);
+  }
+
+  function selectList(list) {
+    setSelectedList(list);
+    setIsModalVisible(true);
+  }
+
+  function updateList(newList) {
+    const listIndex = lists.findIndex((list) => list.id === newList.id);
+    let newLists = lists;
+    newLists[listIndex] = newList;
+    setLists(newLists);
+    clear();
+    ListsService.update(newLists[listIndex]);
+  }
+
+  function clear() {
+    setSelectedList({});
+    setIsModalVisible(false);
+  }
+
   return (
-    <View style={styles.container}>
-      <ListsView lists={lists} />
+    <View style={{ flex: 1 }}>
+      <Button
+        title="+ Nova Lista"
+        onPress={() => createList()}
+        style={styles.btn}
+        color="green"
+      />
+      <View style={styles.container}>
+        <ListsView
+          lists={lists}
+          onRemove={removeList}
+          onSelect={selectList}
+          isLoading={isLoading}
+          getLists={getLists}
+        />
+      </View>
+      <Modal visible={isModalVisible} animationType="slide" transparent={false}>
+        <List list={selectedList} onUpdate={updateList} onClose={clear} />
+      </Modal>
     </View>
   );
 }
@@ -45,5 +87,8 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
     backgroundColor: "#F5FCFF",
+  },
+  btn: {
+    flex: 1,
   },
 });

@@ -1,5 +1,12 @@
 import React from "react";
-import { View, Text, Image, StyleSheet, Dimensions } from "react-native";
+import {
+  View,
+  Text,
+  Image,
+  StyleSheet,
+  Dimensions,
+  TouchableHighlight,
+} from "react-native";
 
 export default function SimpleList(props) {
   const noImg =
@@ -7,10 +14,18 @@ export default function SimpleList(props) {
   const img = props.list.picture || noImg;
 
   return (
-    <View style={styles.container}>
-      <Image style={styles.img} source={{ uri: img }} />
-      <Text style={styles.title}>{props.list.title}</Text>
-    </View>
+    <TouchableHighlight onPress={props.onSelect} style={styles.container}>
+      <View style={styles.subContainer}>
+        <TouchableHighlight
+          style={styles.btn}
+          onPress={() => props.onRemove(props.list)}
+        >
+          <Text style={styles.btnText}>X</Text>
+        </TouchableHighlight>
+        <Image style={styles.img} source={{ uri: img }} />
+        <Text style={styles.title}>{props.list.title}</Text>
+      </View>
+    </TouchableHighlight>
   );
 }
 
@@ -23,6 +38,20 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     borderWidth: 1,
     borderColor: "#aaa",
+    padding: 5,
+  },
+  subContainer: {
+    position: "relative",
+  },
+  btn: {
+    position: "absolute",
+    right: 0,
+    top: 0,
+    zIndex: 2,
+  },
+  btnText: {
+    backgroundColor: "red",
+    color: "white",
     padding: 5,
   },
   img: {

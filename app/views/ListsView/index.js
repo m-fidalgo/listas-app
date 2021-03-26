@@ -1,5 +1,5 @@
 import React from "react";
-import { View, FlatList, StyleSheet } from "react-native";
+import { View, FlatList, RefreshControl, StyleSheet } from "react-native";
 import SimpleList from "../../components/SimpleList";
 
 export default function ListsView(props) {
@@ -7,11 +7,23 @@ export default function ListsView(props) {
     <View style={styles.containerFL}>
       <FlatList
         data={props.lists}
-        renderItem={({ item }) => <SimpleList list={item} />}
+        renderItem={({ item }) => (
+          <SimpleList
+            list={item}
+            onRemove={props.onRemove}
+            onSelect={() => props.onSelect(item)}
+          />
+        )}
         keyExtractor={(item) => {
           return item.id;
         }}
         numColumns={3}
+        refreshControl={
+          <RefreshControl
+            refreshing={props.isLoading}
+            onRefresh={props.getLists}
+          />
+        }
       />
     </View>
   );
