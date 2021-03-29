@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import BackgroundFetch from "react-native-background-fetch";
 import { View, Modal, Button, StyleSheet } from "react-native";
 import { ListsService } from "./app/services/ListsService";
 import ListsView from "./app/views/ListsView";
@@ -18,38 +19,60 @@ export default function App() {
   }
 
   useEffect(() => {
-    getLists();
+    async function startLists() {
+      await ListsService.push();
+      await getLists();
+    }
+
+    startLists();
+    backgroundUpdate();
   }, []);
+
+  function backgroundUpdate() {
+    BackgroundFetch.configure(
+      {
+        minimumFetchInterval: 15,
+      },
+      async (taskId) => {
+        await ListsService.push();
+        await getLists();
+        BackgroundFetch.finish(taskId);
+      },
+      (error) => {
+        console.log(error);
+      }
+    );
+  }
 
   async function createList() {
     const newList = await ListsService.create({
-      title: "Nova Lista",
+      title: "",
       description: "",
       picture: "",
       items: [],
     });
-    setLists([...lists, newList]);
+
+    const listsDb = await ListsService.list();
+    setLists(listsDb);
     selectList(newList);
   }
 
-  function removeList(listToRemove) {
-    setLists(lists.filter((list) => list.id != listToRemove.id));
+  async function updateList(newList) {
+    await ListsService.update(newList);
+    const listsDb = await ListsService.list();
+    setLists(listsDb);
+    clear();
+  }
 
-    ListsService.remove(listToRemove.id);
+  async function removeList(listToRemove) {
+    await ListsService.remove(listToRemove.id);
+    const listsDb = await ListsService.list();
+    setLists(listsDb);
   }
 
   function selectList(list) {
     setSelectedList(list);
     setIsModalVisible(true);
-  }
-
-  function updateList(newList) {
-    const listIndex = lists.findIndex((list) => list.id === newList.id);
-    let newLists = lists;
-    newLists[listIndex] = newList;
-    setLists(newLists);
-    clear();
-    ListsService.update(newLists[listIndex]);
   }
 
   function clear() {

@@ -1,24 +1,56 @@
-const url = "http://192.168.0.101:3002/api/lists-app/";
+import { RNSync } from "rnsync";
+import NetInfo from "@react-native-community/netinfo";
 
-export const ApiService = {
-  get(endpoint) {
-    return fetch(`${url}${endpoint}`).then((response) => response.json());
-  },
-  post(endpoint, data) {
-    return fetch(`${url}${endpoint}`, {
-      method: "POST",
-      body: JSON.stringify(data),
-    }).then((response) => response.json());
-  },
-  put(endpoint, data) {
-    return fetch(`${url}${endpoint}?id=${data.id}`, {
-      method: "PUT",
-      body: JSON.stringify(data),
-    }).then((response) => response.json());
-  },
-  delete(endpoint, id) {
-    return fetch(`${url}${endpoint}?id=${id}`, {
-      method: "DELETE",
-    }).then((response) => response.json());
-  },
-};
+const url = "http://192.168.0.101:5984";
+
+export class DataStore {
+  constructor(dbName) {
+    this.dbUrl = url;
+    this.dbName = dbName;
+    this.store = new RNSync(this.dbUrl, this.dbName);
+    this.store.init();
+  }
+
+  async hasConnection() {
+    const state = await NetInfo.fetch();
+    return state.isConnected;
+  }
+
+  async pull() {
+    if (await this.hasConnection()) {
+      return this.store.replicatePull();
+    }
+    return false;
+  }
+
+  async push() {
+    if (await this.hasConnection()) {
+      return this.store.replicatePush();
+    }
+    return false;
+  }
+
+  async list() {
+    await this.pull();
+    const docs = await this.store.find({});
+    return docs;
+  }
+
+  async create(item) {
+    const doc = await this.store.create(item);
+    await this.push();
+    return doc;
+  }
+
+  async update(doc) {
+    const newDoc = await this.store.update(doc.id, doc.rev, doc.body);
+    await this.push();
+    return newDoc;
+  }
+
+  async remove(id) {
+    await this.store.delete(id);
+    await this.push();
+    return id;
+  }
+}

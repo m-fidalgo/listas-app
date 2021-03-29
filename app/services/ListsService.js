@@ -1,18 +1,5 @@
-import { ApiService } from "./ApiService";
+import { DataStore } from "./ApiService";
 
-const endpoint = "lists";
+const dbName = "lists-app";
 
-export const ListsService = {
-  list() {
-    return ApiService.get(endpoint);
-  },
-  create(item) {
-    return ApiService.post(endpoint, item);
-  },
-  update(item) {
-    return ApiService.put(endpoint, item);
-  },
-  remove(id) {
-    return ApiService.delete(endpoint, id);
-  },
-};
+export const ListsService = new DataStore(dbName);
