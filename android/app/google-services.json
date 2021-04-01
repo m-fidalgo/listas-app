@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "266207997562",
+    "project_id": "listas-app",
+    "storage_bucket": "listas-app.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:266207997562:android:ad784c4f4652d7269855c3",
+        "android_client_info": {
+          "package_name": "com.listasapp"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "266207997562-joire7rov36bo8apgrrehaucqhdoo9aj.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkLAOrhCtPVWlTlWldsWZWsiI0YlgqPD0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "266207997562-joire7rov36bo8apgrrehaucqhdoo9aj.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,56 +1,44 @@
-import { RNSync } from "rnsync";
-import NetInfo from "@react-native-community/netinfo";
+import firebase from "@react-native-firebase/app";
+import "@react-native-firebase/firestore";
 
-const url = "http://192.168.0.101:5984";
+const db = firebase.firestore();
 
 export class DataStore {
-  constructor(dbName) {
-    this.dbUrl = url;
-    this.dbName = dbName;
-    this.store = new RNSync(this.dbUrl, this.dbName);
-    this.store.init();
+  constructor(collectionName) {
+    this.collection = db.collection(collectionName);
   }
 
-  async hasConnection() {
-    const state = await NetInfo.fetch();
-    return state.isConnected;
-  }
-
-  async pull() {
-    if (await this.hasConnection()) {
-      return this.store.replicatePull();
-    }
-    return false;
-  }
-
-  async push() {
-    if (await this.hasConnection()) {
-      return this.store.replicatePush();
-    }
-    return false;
+  formatList(querySnapshot) {
+    return querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
   }
 
   async list() {
-    await this.pull();
-    const docs = await this.store.find({});
-    return docs;
+    const querySnapshot = await this.collection.get();
+    return this.formatList(querySnapshot);
+  }
+
+  watch(callback) {
+    return this.collection.onSnapshot((querySnapshot) => {
+      callback(this.formatList(querySnapshot));
+    });
   }
 
   async create(item) {
-    const doc = await this.store.create(item);
-    await this.push();
-    return doc;
-  }
-
-  async update(doc) {
-    const newDoc = await this.store.update(doc.id, doc.rev, doc.body);
-    await this.push();
+    const newItemRef = await this.collection.add({ body: item });
+    const doc = await newItemRef.get();
+    const newDoc = { ...doc.data(), id: doc.id };
     return newDoc;
   }
 
+  async update(doc) {
+    const { id } = doc;
+    delete doc.id;
+    await this.collection.doc(id).update(doc);
+    return { id, ...doc };
+  }
+
   async remove(id) {
-    await this.store.delete(id);
-    await this.push();
+    await this.collection.doc(id).delete();
     return id;
   }
 }

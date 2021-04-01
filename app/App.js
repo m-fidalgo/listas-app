@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from "react";
-import BackgroundFetch from "react-native-background-fetch";
 import { View, Modal, Button, StyleSheet } from "react-native";
-import { ListsService } from "./app/services/ListsService";
-import ListsView from "./app/views/ListsView";
-import List from "./app/components/List";
+import { ListsService } from "./services/ListsService";
+import ListsView from "./views/ListsView";
+import List from "./components/List";
 
 export default function App() {
   const [lists, setLists] = useState([]);
@@ -19,30 +18,10 @@ export default function App() {
   }
 
   useEffect(() => {
-    async function startLists() {
-      await ListsService.push();
-      await getLists();
-    }
-
-    startLists();
-    backgroundUpdate();
+    ListsService.watch((data) => {
+      setLists(data);
+    });
   }, []);
-
-  function backgroundUpdate() {
-    BackgroundFetch.configure(
-      {
-        minimumFetchInterval: 15,
-      },
-      async (taskId) => {
-        await ListsService.push();
-        await getLists();
-        BackgroundFetch.finish(taskId);
-      },
-      (error) => {
-        console.log(error);
-      }
-    );
-  }
 
   async function createList() {
     const newList = await ListsService.create({

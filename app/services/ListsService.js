@@ -1,5 +1,4 @@
 import { DataStore } from "./ApiService";
+const collectionName = "lists";
 
-const dbName = "lists-app";
-
-export const ListsService = new DataStore(dbName);
+export const ListsService = new DataStore(collectionName);

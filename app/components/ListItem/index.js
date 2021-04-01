@@ -8,7 +8,7 @@ export default function ListItem(props) {
   }
 
   return (
-    <View>
+    <View style={styles.container}>
       <Switch
         value={props.item.done}
         onValueChange={(done) => updateItem("done", done)}
