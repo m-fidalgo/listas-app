@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet } from "react-native";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  StyleSheet,
+  TouchableOpacity,
+} from "react-native";
 
 import firebase from "@react-native-firebase/app";
 import "@react-native-firebase/auth";
@@ -50,6 +57,15 @@ export default function LoginView(props) {
     }
   }
 
+  function resetPassword() {
+    if (email) {
+      firebase.auth().sendPasswordResetEmail(email);
+    } else {
+      setErrorMessage("Digite seu email");
+      setPassword("");
+    }
+  }
+
   return (
     <View style={styles.container}>
       <View>
@@ -77,9 +93,14 @@ export default function LoginView(props) {
         {isNewUser ? (
           <Button title="Cadastrar" onPress={signInEmail} />
         ) : (
-          <Button title="Login" onPress={login} />
+          <View>
+            <Button title="Login" onPress={login} />
+            <TouchableOpacity onPress={resetPassword}>
+              <Text style={styles.loginMsg}>Esqueci minha senha</Text>
+            </TouchableOpacity>
+          </View>
         )}
-        <Text style={styles.loginError}>{errorMessage}</Text>
+        <Text style={[styles.loginMsg, styles.loginError]}>{errorMessage}</Text>
       </View>
     </View>
   );
@@ -102,9 +123,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     margin: 5,
   },
-  loginError: {
-    color: "red",
+  loginMsg: {
     marginTop: 15,
     alignSelf: "center",
+  },
+  loginError: {
+    color: "red",
   },
 });
