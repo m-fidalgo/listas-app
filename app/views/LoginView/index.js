@@ -6,20 +6,25 @@ import {
   Button,
   StyleSheet,
   TouchableOpacity,
+  Image,
 } from "react-native";
 import {
   GoogleSignin,
   GoogleSigninButton,
 } from "@react-native-google-signin/google-signin";
-
+import FingerprintScanner from "react-native-fingerprint-scanner";
 import firebase from "@react-native-firebase/app";
 import "@react-native-firebase/auth";
+
+const fingerprintIcon = "https://img.icons8.com/ios/452/fingerprint.png";
 
 export default function LoginView(props) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
   const [isNewUser, setIsNewUser] = useState(false);
+  const [isScannerOn, setIsScannerOn] = useState(false);
+  const [scannerMsg, setScannerMsg] = useState("Autentique com sua digital");
 
   useEffect(() => {
     GoogleSignin.configure({
@@ -27,22 +32,52 @@ export default function LoginView(props) {
         "266207997562-joire7rov36bo8apgrrehaucqhdoo9aj.apps.googleusercontent.com",
     });
 
-    const onAuthStateUnsubscribe = firebase
-      .auth()
-      .onAuthStateChanged((user) => {
-        if (user) {
-          props.onLogin(user);
-        }
-      });
+    async function start() {
+      const currentUser = firebase.auth().currentUser;
 
-    return () => onAuthStateUnsubscribe();
+      if (currentUser) {
+        try {
+          await FingerprintScanner.isSensorAvailable();
+          startScanner(currentUser);
+        } catch (error) {
+          props.onLogin(currentUser);
+        }
+      }
+    }
+
+    start();
   });
+
+  async function startScanner(user) {
+    if (!isScannerOn) {
+      setIsScannerOn(true);
+
+      try {
+        await FingerprintScanner.authenticate({
+          onAttempt: () => {
+            setScannerMsg("Tente Novamente");
+          },
+        });
+
+        props.onLogin(user);
+      } catch (error) {
+        stopScanner();
+      }
+    }
+  }
+
+  async function stopScanner() {
+    setIsScannerOn(false);
+    FingerprintScanner.release();
+  }
 
   async function login() {
     try {
-      const resp = await firebase
+      const response = await firebase
         .auth()
         .signInWithEmailAndPassword(email, password);
+
+      props.onLogin(response.user);
     } catch (error) {
       setErrorMessage("Email e/ou Senha inválidos");
       setEmail("");
@@ -53,7 +88,11 @@ export default function LoginView(props) {
   async function signInEmail() {
     if (password.length >= 6) {
       try {
-        await firebase.auth().createUserWithEmailAndPassword(email, password);
+        const response = await firebase
+          .auth()
+          .createUserWithEmailAndPassword(email, password);
+
+        props.onLogin(response.user);
       } catch (error) {
         setErrorMessage("Erro no cadastro");
         setEmail("");
@@ -80,7 +119,8 @@ export default function LoginView(props) {
   }
 
   async function signIn(credential) {
-    return firebase.auth().signInWithCredential(credential);
+    const response = await firebase.auth().signInWithCredential(credential);
+    props.onLogin(response.user);
   }
 
   function resetPassword() {
@@ -134,6 +174,13 @@ export default function LoginView(props) {
         size={GoogleSigninButton.Size.Wide}
         onPress={signInGoogle}
       />
+      {!isScannerOn ? null : (
+        <View style={styles.scannerContainer}>
+          <Image style={styles.scannerImg} source={{ uri: fingerprintIcon }} />
+          <Text style={styles.scannerText}>{scannerMsg}</Text>
+          <Button title="Cancelar" onPress={stopScanner} color="red" />
+        </View>
+      )}
     </View>
   );
 }
@@ -166,5 +213,22 @@ const styles = StyleSheet.create({
     width: 180,
     height: 50,
     marginTop: 15,
+  },
+  scannerContainer: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: "rgba(25, 25, 97, .9)",
+    zIndex: 5,
+    elevation: 5,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scannerImg: {
+    width: 100,
+    height: 100,
+  },
+  scannerText: {
+    fontSize: 25,
+    color: "#fff",
+    marginBottom: 40,
   },
 });
