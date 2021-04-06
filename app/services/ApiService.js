@@ -1,15 +1,28 @@
 import firebase from "@react-native-firebase/app";
 import "@react-native-firebase/firestore";
+import "@react-native-firebase/auth";
 
 const db = firebase.firestore();
+const auth = firebase.auth();
 
 export class DataStore {
   constructor(collectionName) {
-    this.collection = db.collection(collectionName);
+    this.collection = null;
+
+    auth.onAuthStateChanged((user) => {
+      if (user) {
+        this.collection = db
+          .collection(collectionName)
+          .doc(user.uid)
+          .collection("userItems");
+      }
+    });
   }
 
   formatList(querySnapshot) {
-    return querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    if (querySnapshot) {
+      return querySnapshot.docs.map((doc) => ({ ...doc.data(), id: doc.id }));
+    }
   }
 
   async list() {
@@ -18,9 +31,11 @@ export class DataStore {
   }
 
   watch(callback) {
-    return this.collection.onSnapshot((querySnapshot) => {
-      callback(this.formatList(querySnapshot));
-    });
+    if (this.collection) {
+      return this.collection.onSnapshot((querySnapshot) => {
+        callback(this.formatList(querySnapshot));
+      });
+    }
   }
 
   async create(item) {
