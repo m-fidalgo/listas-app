@@ -71,6 +71,7 @@ export default function MainView(props) {
         user={props.user}
         onClose={toggleUserView}
         onLogout={props.onLogout}
+        onUpdateUser={props.onUpdateUser}
       />
     );
   else

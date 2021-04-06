@@ -7,6 +7,10 @@ import {
   StyleSheet,
   TouchableOpacity,
 } from "react-native";
+import {
+  GoogleSignin,
+  GoogleSigninButton,
+} from "@react-native-google-signin/google-signin";
 
 import firebase from "@react-native-firebase/app";
 import "@react-native-firebase/auth";
@@ -18,6 +22,11 @@ export default function LoginView(props) {
   const [isNewUser, setIsNewUser] = useState(false);
 
   useEffect(() => {
+    GoogleSignin.configure({
+      webClientId:
+        "266207997562-joire7rov36bo8apgrrehaucqhdoo9aj.apps.googleusercontent.com",
+    });
+
     const onAuthStateUnsubscribe = firebase
       .auth()
       .onAuthStateChanged((user) => {
@@ -55,6 +64,23 @@ export default function LoginView(props) {
       setEmail("");
       setPassword("");
     }
+  }
+
+  async function signInGoogle() {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const credential = firebase.auth.GoogleAuthProvider.credential(
+        userInfo.idToken
+      );
+      signIn(credential);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function signIn(credential) {
+    return firebase.auth().signInWithCredential(credential);
   }
 
   function resetPassword() {
@@ -102,6 +128,12 @@ export default function LoginView(props) {
         )}
         <Text style={[styles.loginMsg, styles.loginError]}>{errorMessage}</Text>
       </View>
+      <GoogleSigninButton
+        style={styles.googleBtn}
+        color={GoogleSigninButton.Color.Dark}
+        size={GoogleSigninButton.Size.Wide}
+        onPress={signInGoogle}
+      />
     </View>
   );
 }
@@ -129,5 +161,10 @@ const styles = StyleSheet.create({
   },
   loginError: {
     color: "red",
+  },
+  googleBtn: {
+    width: 180,
+    height: 50,
+    marginTop: 15,
   },
 });

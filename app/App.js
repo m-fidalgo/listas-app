@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { SafeAreaView, StyleSheet } from "react-native";
 import MainView from "./views/MainView";
 import LoginView from "./views/LoginView";
+import { firebase } from "@react-native-firebase/auth";
 
 export default function App() {
   const [user, setUser] = useState(null);
@@ -17,10 +18,15 @@ export default function App() {
     setUser(null);
   }
 
+  async function onUpdateUser() {
+    await firebase.auth().currentUser.reload();
+    setUser(firebase.auth().currentUser);
+  }
+
   return (
     <SafeAreaView style={styles.container}>
       {isLogged ? (
-        <MainView user={user} onLogout={onLogout} />
+        <MainView user={user} onLogout={onLogout} onUpdateUser={onUpdateUser} />
       ) : (
         <LoginView onLogin={onLogin} />
       )}

@@ -8,7 +8,7 @@ import {
   StyleSheet,
   Image,
 } from "react-native";
-
+import { GoogleSignin } from "@react-native-google-signin/google-signin";
 import firebase from "@react-native-firebase/app";
 import "@react-native-firebase/auth";
 
@@ -19,6 +19,49 @@ export default function UserView(props) {
     const auth = firebase.auth();
     await auth.signOut();
     props.onLogout();
+  }
+
+  async function linkGoogle() {
+    try {
+      await GoogleSignin.hasPlayServices();
+      const userInfo = await GoogleSignin.signIn();
+      const credential = firebase.auth.GoogleAuthProvider.credential(
+        userInfo.idToken
+      );
+      linkWithCredential(credential);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  async function linkWithCredential(credential) {
+    await firebase.auth().currentUser.linkWithCredential(credential);
+    props.onUpdateUser();
+  }
+
+  async function unlinkCredential(providerId) {
+    await firebase.auth().currentUser.unlink(providerId);
+    props.onUpdateUser();
+  }
+
+  function btnGoogle() {
+    if (
+      props.user.providerData.some(
+        ({ providerId }) => providerId === "google.com"
+      )
+    ) {
+      if (props.user.providerData.length > 1) {
+        return (
+          <Button
+            title="Desconectar do Google"
+            onPress={() => unlinkCredential("google.com")}
+          />
+        );
+      }
+      return null;
+    } else {
+      return <Button title="Conectar ao Google" onPress={linkGoogle} />;
+    }
   }
 
   return (
@@ -36,6 +79,7 @@ export default function UserView(props) {
             {props.user.displayName || props.user.email}
           </Text>
         </View>
+        <View>{btnGoogle()}</View>
         <Button title="Logout" onPress={logout} />
       </ScrollView>
     </View>
