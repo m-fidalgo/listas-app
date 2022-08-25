@@ -9,5 +9,6 @@
 <p>:heavy_check_mark: Cadastro, login e logout</p>
 
 <h3>Tecnologias e Ferramentas</h3>
-<li>React Native</li>
-<li>Firebase</li>
+
+![React Native](https://img.shields.io/badge/react_native-%2320232a.svg?style=for-the-badge&logo=react&logoColor=%2361DAFB)
+![Firebase](https://img.shields.io/badge/firebase-%23039BE5.svg?style=for-the-badge&logo=firebase)
